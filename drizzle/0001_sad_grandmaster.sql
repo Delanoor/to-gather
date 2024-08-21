@@ -1,0 +1,1 @@
+ALTER TABLE "to-gather_user" ALTER COLUMN "email" DROP NOT NULL;
