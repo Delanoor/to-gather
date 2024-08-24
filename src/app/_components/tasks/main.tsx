@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { api } from '@/trpc/react';
 import { type SVGProps, useState } from 'react';
-import TodayTaskCard from './today-task-card';
+import DailyTaskList from './daily-task-list';
 
 export default function Tasks() {
   const [currentDate, setCurrentDate] = useState<Date | undefined>(new Date());
@@ -55,6 +55,7 @@ export default function Tasks() {
       ],
     },
   ]);
+
   return (
     <div className="flex flex-col h-screen">
       <header className="bg-primary text-primary-foreground py-4 px-6 flex items-center justify-between">
@@ -72,16 +73,7 @@ export default function Tasks() {
             onSelect={setCurrentDate}
           />
           <Separator className="my-4" />
-          <div className="grid gap-4">
-            <div className="flex items-center justify-between">
-              <div className="font-medium">Today's Tasks</div>
-              <Button variant="ghost" size="icon">
-                <PlusIcon className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <TodayTaskCard className="grid gap-2" />
-          </div>
+          <DailyTaskList className="grid gap-4" />
         </div>
         <div className="bg-card rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between">
@@ -185,25 +177,5 @@ export default function Tasks() {
         </div>
       </main>
     </div>
-  );
-}
-
-function PlusIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-    </svg>
   );
 }

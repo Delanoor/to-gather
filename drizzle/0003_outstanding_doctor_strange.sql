@@ -1,0 +1,1 @@
+DROP TABLE "to-gather_post";

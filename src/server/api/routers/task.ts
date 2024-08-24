@@ -7,6 +7,8 @@ import {
   publicProcedure,
 } from '@/server/api/trpc';
 import { tasks } from '@/server/db/schema';
+import { createTasksSchema } from '@/types/task';
+import { eq } from 'drizzle-orm';
 
 export const taskRouter = createTRPCRouter({
   create: protectedProcedure
@@ -26,15 +28,7 @@ export const taskRouter = createTRPCRouter({
       });
     }),
 
-  getLatest: publicProcedure.query(async ({ ctx }) => {
-    const post = await ctx.db.query.posts.findFirst({
-      orderBy: (posts, { desc }) => [desc(posts.createdAt)],
-    });
-
-    return post ?? null;
-  }),
-
-  getTasks: protectedProcedure
+  getDailyTasks: protectedProcedure
     .input(
       z.object({
         date: z.string().optional(),
@@ -43,7 +37,7 @@ export const taskRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const taskDate = input.date ? new Date(input.date) : new Date();
-      const timezone = input.timezone ?? 'UTC';
+      const timezone = input.timezone ?? 'Asia/Seoul';
       const { startOfDayUtc, endOfDayUtc } = getUtcDayRange(taskDate, timezone);
 
       const tasks = await ctx.db.query.tasks.findMany({
@@ -55,5 +49,28 @@ export const taskRouter = createTRPCRouter({
       });
 
       return tasks;
+    }),
+  createTasks: protectedProcedure
+    .input(createTasksSchema)
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.insert(tasks).values(
+        input.tasks.map((task) => ({
+          title: task.title,
+          userId: ctx.session.user.id,
+          completed: task.completed,
+          // description: task.description,
+          dueDate: new Date(task.dueDate),
+        })),
+      );
+    }),
+  deleteTask: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      console.log('🚀 ~ .mutation ~ input:', input);
+      await ctx.db.delete(tasks).where(eq(tasks.id, Number(input.id)));
     }),
 });
