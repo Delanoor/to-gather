@@ -7,8 +7,9 @@ import {
   publicProcedure,
 } from '@/server/api/trpc';
 import { tasks } from '@/server/db/schema';
-import { createTasksSchema } from '@/types/task';
+import { updateTasksSchema } from '@/types/task';
 import { eq } from 'drizzle-orm';
+import { title } from 'process';
 
 export const taskRouter = createTRPCRouter({
   create: protectedProcedure
@@ -50,18 +51,22 @@ export const taskRouter = createTRPCRouter({
 
       return tasks;
     }),
-  createTasks: protectedProcedure
-    .input(createTasksSchema)
+  updateTasks: protectedProcedure
+    .input(updateTasksSchema)
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.insert(tasks).values(
-        input.tasks.map((task) => ({
-          title: task.title,
-          userId: ctx.session.user.id,
-          completed: task.completed,
-          // description: task.description,
-          dueDate: new Date(task.dueDate),
-        })),
-      );
+      const { tasks: tasksData } = input;
+
+      const updates = tasksData.map(async (task) => {
+        await ctx.db
+          .update(tasks)
+          .set({
+            title: task.title,
+            completed: task.completed,
+          })
+          .where(eq(tasks.id, Number(task.taskId)));
+      });
+
+      await Promise.all(updates);
     }),
   deleteTask: protectedProcedure
     .input(
@@ -70,7 +75,29 @@ export const taskRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      console.log('🚀 ~ .mutation ~ input:', input);
+      // console.log('🚀 ~ .mutation ~ input:', input);
       await ctx.db.delete(tasks).where(eq(tasks.id, Number(input.id)));
+    }),
+  getTasksByDate: protectedProcedure
+    .input(
+      z.object({
+        date: z.string().optional(),
+        timezone: z.string().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const taskDate = input.date ? new Date(input.date) : new Date();
+      const timezone = input.timezone ?? 'Asia/Seoul';
+      const { startOfDayUtc, endOfDayUtc } = getUtcDayRange(taskDate, timezone);
+
+      const tasks = await ctx.db.query.tasks.findMany({
+        where: (tasks, { eq, and, between }) =>
+          and(
+            eq(tasks.userId, ctx.session.user.id),
+            between(tasks.dueDate, startOfDayUtc, endOfDayUtc),
+          ),
+      });
+
+      return tasks;
     }),
 });

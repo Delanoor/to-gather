@@ -5,9 +5,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { IconPlus, IconTrash } from '@/components/ui/icons';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { api } from '@/trpc/react';
-import { CreateTasksSchema, createTasksSchema } from '@/types/task';
+import { UpdateTasksSchema, updateTasksSchema } from '@/types/task';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useFieldArray, useForm } from 'react-hook-form';
@@ -19,14 +20,14 @@ const DailyTaskList = ({
   className?: string;
 }) => {
   const router = useRouter();
-  const { data: tasks } = api.task.getDailyTasks.useQuery({
+  const { data: tasks, isLoading } = api.task.getDailyTasks.useQuery({
     date: new Date().toDateString(),
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
 
-  const { mutate: createTasks, isPending } = api.task.createTasks.useMutation({
+  const { mutate: createTasks, isPending } = api.task.updateTasks.useMutation({
     onSuccess: () => {
-      toast.success('Tasks created');
+      toast.success('Tasks updated');
       router.refresh();
     },
     onError: () => {
@@ -44,7 +45,7 @@ const DailyTaskList = ({
     },
   });
 
-  const form = useForm<CreateTasksSchema>({
+  const form = useForm<UpdateTasksSchema>({
     defaultValues: {
       tasks: tasks?.map((task) => ({
         taskId: String(task.id),
@@ -61,7 +62,7 @@ const DailyTaskList = ({
         completed: task.completed,
       })),
     },
-    resolver: zodResolver(createTasksSchema),
+    resolver: zodResolver(updateTasksSchema),
   });
 
   const { append, remove, fields } = useFieldArray({
@@ -69,8 +70,7 @@ const DailyTaskList = ({
     name: 'tasks',
   });
 
-  const onSubmit = (data: CreateTasksSchema) => {
-    console.log('🚀 ~ onSubmit ~ data:', data);
+  const onSubmit = (data: UpdateTasksSchema) => {
     createTasks(data);
   };
 
@@ -84,6 +84,7 @@ const DailyTaskList = ({
           type="button"
           onClick={() => {
             append({
+              taskId: '',
               title: '',
               dueDate: new Date().toDateString(),
               completed: false,
@@ -99,14 +100,21 @@ const DailyTaskList = ({
           className="flex flex-col space-y-4"
         >
           <div className="space-y-1">
+            {isLoading && (
+              <div className="space-y-1">
+                <Skeleton className="h-8" />
+                <Skeleton className="h-8" />
+                <Skeleton className="h-8" />
+              </div>
+            )}
             {fields.map((field, index) => (
-              <div className="inline-flex items-center space-x-2 w-full p-2">
+              <div className="flex items-center space-x-1 w-full px-2 hover:bg-muted rounded">
                 <FormField
                   key={field.id}
                   control={form.control}
                   name={`tasks.${index}.completed`}
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex">
                       <FormControl>
                         <Checkbox
                           checked={!!field.value}
@@ -120,20 +128,26 @@ const DailyTaskList = ({
                   key={field.id}
                   control={form.control}
                   name={`tasks.${index}.title`}
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
+                  render={({ field: formField }) => (
+                    <FormItem className="flex-1 w-full focus-visible:underline">
                       <FormControl>
-                        <Input className="text-sm" {...field} />
+                        <Input
+                          className={cn(
+                            'border-none shadow-none py-0 h-6 text-sm focus-visible:ring-0 focus-visible:underline w-full',
+                            {
+                              'line-through': field.completed,
+                            },
+                          )}
+                          {...formField}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
                 />
-
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="hover:bg-card"
                   onClick={() => {
                     if (!field.taskId) {
                       remove(index);

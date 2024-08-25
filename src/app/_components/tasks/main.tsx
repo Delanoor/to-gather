@@ -6,9 +6,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { api } from '@/trpc/react';
-import { type SVGProps, useState } from 'react';
+import { useState } from 'react';
 import DailyTaskList from './daily-task-list';
+import TaskList from './task-list';
 
 export default function Tasks() {
   const [currentDate, setCurrentDate] = useState<Date | undefined>(new Date());
@@ -82,53 +82,7 @@ export default function Tasks() {
           </div>
           <Separator className="my-4" />
           <ScrollArea className="max-h-[70vh]">
-            <div className="grid gap-4">
-              <div className="flex items-center gap-4 p-4 rounded-md bg-muted">
-                <div className="flex-1">
-                  <div className="font-medium">Finish quarterly report</div>
-                  <div className="text-sm text-muted-foreground">
-                    Due: April 15
-                  </div>
-                </div>
-                <Checkbox checked />
-              </div>
-              <div className="flex items-center gap-4 p-4 rounded-md bg-muted">
-                <div className="flex-1">
-                  <div className="font-medium">Call with client</div>
-                  <div className="text-sm text-muted-foreground">
-                    Due: April 10
-                  </div>
-                </div>
-                <Checkbox />
-              </div>
-              <div className="flex items-center gap-4 p-4 rounded-md bg-muted">
-                <div className="flex-1">
-                  <div className="font-medium">Prepare for team meeting</div>
-                  <div className="text-sm text-muted-foreground">
-                    Due: April 20
-                  </div>
-                </div>
-                <Checkbox />
-              </div>
-              <div className="flex items-center gap-4 p-4 rounded-md bg-muted">
-                <div className="flex-1">
-                  <div className="font-medium">Review marketing strategy</div>
-                  <div className="text-sm text-muted-foreground">
-                    Due: April 25
-                  </div>
-                </div>
-                <Checkbox />
-              </div>
-              <div className="flex items-center gap-4 p-4 rounded-md bg-muted">
-                <div className="flex-1">
-                  <div className="font-medium">Attend leadership workshop</div>
-                  <div className="text-sm text-muted-foreground">
-                    Due: May 1
-                  </div>
-                </div>
-                <Checkbox />
-              </div>
-            </div>
+            <TaskList className="grid gap-4" selectedDate={currentDate} />
           </ScrollArea>
         </div>
         <div className="bg-card rounded-lg shadow-md p-6">

@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
-export const createTasksSchema = z.object({
+export const updateTasksSchema = z.object({
   tasks: z.array(
     z.object({
-      taskId: z.string().optional(),
+      taskId: z.string(),
       title: z.string(),
       dueDate: z.string(),
       completed: z.boolean(),
@@ -11,4 +11,4 @@ export const createTasksSchema = z.object({
   ),
 });
 
-export type CreateTasksSchema = z.infer<typeof createTasksSchema>;
+export type UpdateTasksSchema = z.infer<typeof updateTasksSchema>;
